@@ -1,22 +1,23 @@
+from email.errors import InvalidMultipartContentTransferEncodingDefect
+import json
+from msilib.schema import Error
+from urllib.robotparser import RequestRate
 from flask_restful import reqparse, Api, Resource , request
 from flaskext.mysql import MySQL
 from flask_cors import CORS, cross_origin
-from flask import Flask, jsonify, request, send_file, make_response
-from plots_code import barchart_diseases
+from flask import Flask, jsonify, render_template, request, send_file, make_response, abort, session
+# from plots_code import barchart_diseases
 import pymysql
 import logging
-
 
 app = Flask(__name__)
 MySql = MySQL()
 cors = CORS(app)
-app.config['MYSQL_DATABASE_USER'] = '--------'
-app.config['MYSQL_DATABASE_PASSWORD'] = '--------'
-app.config['MYSQL_DATABASE_DB'] = '--------$articles_db'
-app.config['MYSQL_DATABASE_HOST'] = '--------.mysql.pythonanywhere-services.com'
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = ''
+app.config['MYSQL_DATABASE_DB'] = 'mydb'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 MySql.init_app(app)
-
-
 
 # Sevrer script with two API endpoints (Upload and Fetch) that only accept http or https POST requests
 @app.route('/add', methods=['POST']) #/add end point that can only be call via POST request
@@ -352,9 +353,44 @@ def barchart_plot_drugs():
 
 @app.route('/',methods=['POST','GET']) # '/' (only with slash), accepts POST and GET methods; Output - in the browser
 def display():
-    return "P is for Panther"
+    return render_template('index.html')
+    # return "P is for Panther"
 
+@app.route('/about',methods=['POST','GET']) 
+def display_about():
+    # return render_template('index.html')
+    return "This is a About us page"
+
+@app.route('/get_data',methods=['POST','GET']) 
+def display_get():
+    if request.method == "POST":
+        filter_data = request.get_json()[0]['filter'].split(',')
+        for i in filter_data:
+            print(i)
+    
+        try:            
+            connection = pymysql.connect(host='localhost',
+                                         port=3306,
+                                        user='root',
+                                        password='',
+                                        database='mydb')
+            cursor = connection.cursor()
+            sql = "SELECT * FROM articles"
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            print(result)
+        except Exception as ex:
+            print(ex)
+            results = {'processed': str(ex)}
+            return jsonify(results)
+
+        results = {'processed': 'true'}
+        return jsonify(results)
+    if request.method == "GET":
+        results = {'processed': 'GET is not supported'}
+        return jsonify(results)
+        
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
