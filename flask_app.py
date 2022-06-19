@@ -8,6 +8,7 @@ from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, render_template, request, send_file, make_response, abort, session
 # from plots_code import barchart_diseases
 import pymysql
+from pymysql import Error
 import logging
 
 app = Flask(__name__)
@@ -379,9 +380,9 @@ def display_get():
             cursor.execute(sql)
             result = cursor.fetchall()
             print(result)
-        except Exception as ex:
-            print(ex)
-            results = {'processed': str(ex)}
+        except Error as err:
+            print(err)
+            results = {'processed': str(err)}
             return jsonify(results)
 
         results = {'processed': 'true'}
